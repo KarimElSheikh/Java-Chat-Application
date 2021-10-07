@@ -5,11 +5,11 @@ import java.util.StringTokenizer;
 
 public class GreetingServer3
 {
-    public static void main(String [] args) throws Exception
-    {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        GreetingServer gs = new GreetingServer(6002);
-        InetAddress IP = InetAddress.getByName("127.0.0.1");
-        gs.connectToServer(InetAddress.getByName("127.0.0.1"), 6004);
-    }
+	public static void main(String [] args) throws Exception
+	{
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		GreetingServer gs = new GreetingServer(6003);
+		InetAddress IP = InetAddress.getByName("127.0.0.1");
+		gs.connectToServer(InetAddress.getByName("127.0.0.1"), 6050);
+	}
 }

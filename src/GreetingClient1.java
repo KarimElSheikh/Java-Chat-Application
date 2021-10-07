@@ -8,17 +8,16 @@ import javax.swing.text.BadLocationException;
 
 public class GreetingClient1
 {
-    static Frame frame;
+	static Frame frame;
 	
-    public static void main(String [] args) throws IOException, BadLocationException
-    {
-        
-	String serverName = "localhost";
-	int port = 6000;
-        
-	Socket client = new Socket(InetAddress.getByName("127.0.0.1"), port);
-        DataInputStream in = new DataInputStream(client.getInputStream());
-        DataOutputStream out = new DataOutputStream(client.getOutputStream());
-        frame = new Frame(client, in, out);
-    }
+	public static void main(String [] args) throws IOException, BadLocationException
+	{
+		int port = 6001;
+		
+		Socket client = new Socket(InetAddress.getByName("127.0.0.1"), port);
+		DataInputStream in = new DataInputStream(client.getInputStream());
+		DataOutputStream out = new DataOutputStream(client.getOutputStream());
+		
+		frame = new Frame(client, in, out);
+	}
 }

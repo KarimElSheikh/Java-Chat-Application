@@ -5,7 +5,7 @@ import java.io.*;
 
 public class GreetingServer {
    
-    boolean reply; // mstany reply mn el central server 
+    boolean reply;  // Boolean indicating it's waiting for a reply from the central server
     ServerSocket serverSocket;
     ArrayList <AcceptClient> clientSockets;
     ArrayList <String> loginNames; 
@@ -13,11 +13,10 @@ public class GreetingServer {
     AcceptCentralServer centralServer;
     String allConnectedUsers;  
    
-    public static int ni(String s, int n) {
+    public static int findNthPercSign(String s, int n) {
         for(int i = 0; i < s.length(); i++) {
             if(s.charAt(i) == '%') {
-                n--;
-                if(n == 0) return i;
+                if(--n == 0) return i;
             }
         }
         return -1;
@@ -42,7 +41,9 @@ public class GreetingServer {
             public void run() {
                 try {
                     waitForClients();
-                } catch (IOException e) {}
+                } catch (IOException e) {
+                    System.out.println("Exception1");
+                }
         }};
         Thread thread = new Thread(run);
         thread.start();
@@ -57,11 +58,11 @@ public class GreetingServer {
             Runnable run = new Runnable() {
             public void run() {
                 try {
-                    String s = waitForFirstMessage(in, out); // wait for login name 
-                    if(s!= null)
-                    new AcceptClient(socket, s);
+                    String s = waitForFirstMessage(in, out);  // Wait for login name
+                    if(s != null)
+                        new AcceptClient(socket, s);
                 } catch (Exception e) {
-                    System.out.println("Exception");
+                    System.out.println("Exception2");
                 }
             }};
             Thread thread = new Thread(run); thread.start();
@@ -69,41 +70,47 @@ public class GreetingServer {
     }
         
     public String waitForFirstMessage(DataInputStream in, DataOutputStream out) throws IOException {
-        composeMessage2(out, "NOT", "Welcome, please enter your Login Name"); // type NOT notification 
+        composeMessage2(out, "NOT", "Welcome, please enter your Login Name");  // NOT = Notification
         String s = "";
         
         while(true) {
             while(s.equals(""))
                 s = in.readUTF();
             if(s.length() >= 3) {
-                if(s.substring(0,3).equals("JON")) { // type JON  user send his login name 
+                if(s.equals("BYE%")) {
+                    return null;
+                }
+                if(s.substring(0,3).equals("JON")) {  // JON = User sends his login name to "join" 
                     reply = false; 
-                    String user = s.substring(ni(s, 1) + 1);
+                    String user = s.substring(findNthPercSign(s, 1) + 1);
                     composeMessage2(centralServer.out, "LST", getConnectedUsersToThisServerOnly());
-                    while(!reply);
-                    int l = 0; allOnlineUsers.clear(); // byshof min online users dlwa2ty 
+                    while(!reply) {
+                    }
+                    // System.out.println("Got a reply in string "allConnectedUsers" with the list of users from the central server");
+                    int start = 0; allOnlineUsers.clear();
+					// Now parsing the string "allConnectedUsers"
                     for(int i = 0; i < allConnectedUsers.length(); i++) {
                         if(allConnectedUsers.charAt(i)=='%') {
-                            allOnlineUsers.add(allConnectedUsers.substring(l, i));
-                            System.out.println(allConnectedUsers.substring(l, i));
-                            l = i+1;
+                            allOnlineUsers.add(allConnectedUsers.substring(start, i));
+                            System.out.println(allConnectedUsers.substring(start, i));
+                            start = i+1;
                         }
                     }
-                    s = s.substring(ni(s, 1) + 1);
+                    s = s.substring(findNthPercSign(s, 1) + 1);
                     if(allOnlineUsers.contains(s)) {
-                        composeMessage2(out, "NOT", "Sorry this login name was already entered by another user. Enter another login name");
+                        composeMessage2(out, "NOT", "Sorry, this login name was already entered by another user. Please, enter another login name.");
                         s = "";
                     }
-                    else if(allOnlineUsers.contains("%")) {
-                        composeMessage2(out, "NOT", "Login name can't contain \'%\'");
+                    else if(s.contains("%")) {
+                        composeMessage2(out, "NOT", "Sorry, the login name can't contain \'%\'.");
                         s = "";
                     }
                     else if(s.equals("")) {
-                        composeMessage2(out, "NOT", "Login name can't be empty");
+                        composeMessage2(out, "NOT", "Sorry, the login name can't be empty.");
                     }
                     else {
-                        composeMessage2(out, "ACP", "Successfully Logged in");
-                    return s;
+                        composeMessage2(out, "ACP", "Successfully logged in.");
+                        return s;
                     }
                 }
             }
@@ -115,7 +122,9 @@ public class GreetingServer {
             public void run() {
                 try {
                     centralServer = new AcceptCentralServer(new Socket(IP, port));
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                    System.out.println("Exception3");
+                }
         }};
         Thread thread = new Thread(run); thread.start();
     }
@@ -155,7 +164,10 @@ public class GreetingServer {
             public void run() {
                 try {
                     inFromCentralServer();
-                } catch (IOException e) {}
+                } catch (IOException e) {
+                    System.out.println("Exception4");
+                    e.printStackTrace();
+                }
             }};
             Thread thread = new Thread(run);
             thread.start();
@@ -171,15 +183,14 @@ public class GreetingServer {
                         composeMessage2(out, "REP", getConnectedUsersToThisServerOnly());
                     }
                     else if (s.substring(0, 3).equals("LST")) {
-                        allConnectedUsers = s.substring(ni(s, 1) + 1);
-                        System.out.println("received");
+                        allConnectedUsers = s.substring(findNthPercSign(s, 1) + 1);
                         reply = true; 
                     }
                     else if(s.substring(0, 3).equals("MSG")) {
-                        String sender = s.substring(ni(s, 1) + 1, ni(s, 2));
-                        String receiver = s.substring(ni(s, 2) + 1, ni(s, 3));
-                        int ttl = Integer.parseInt(s.substring(ni(s, 3) + 1, ni(s, 4)));
-                        String message = s.substring(ni(s, 4) + 1);
+                        String sender = s.substring(findNthPercSign(s, 1) + 1, findNthPercSign(s, 2));
+                        String receiver = s.substring(findNthPercSign(s, 2) + 1, findNthPercSign(s, 3));
+                        int ttl = Integer.parseInt(s.substring(findNthPercSign(s, 3) + 1, findNthPercSign(s, 4)));
+                        String message = s.substring(findNthPercSign(s, 4) + 1);
                         if(ttl != 0) {
                             for(int i = 0; i < loginNames.size(); i++) {
                                 if(loginNames.get(i).equals(receiver)) {
@@ -214,7 +225,9 @@ public class GreetingServer {
             public void run() {
                 try {
                     inFromClient();
-                } catch (IOException e) {}
+                } catch (IOException e) {
+                    System.out.println("Exception5");
+                }
             }};
             Thread thread = new Thread(run); thread.start();
         }
@@ -228,21 +241,23 @@ public class GreetingServer {
                 if(s.length() >= 3) {
                     if(s.substring(0, 3).equals("LST")) {
                         reply = false;
-                        String user = s.substring(ni(s, 1) + 1);
+                        String user = s.substring(findNthPercSign(s, 1) + 1);
                         composeMessage2(centralServer.out, "LST", getConnectedUsersToThisServerOnly(user));
                         Runnable run = new Runnable() {
                             public void run() {
                                 try {
                                     sendConnectedUsers();
-                                } catch (IOException e) {}
+                                } catch (IOException e) {
+                                    System.out.println("Exception6");
+                                }
                         }};
                         Thread thread = new Thread(run); thread.start();
                     }
                     else if(s.substring(0, 3).equals("MSG")) {
-                        String sender = s.substring(ni(s, 1) + 1, ni(s, 2));
-                        String receiver = s.substring(ni(s, 2) + 1, ni(s, 3));
-                        int ttl = Integer.parseInt(s.substring(ni(s, 3) + 1, ni(s, 4)));
-                        String message = s.substring(ni(s, 4) + 1);
+                        String sender = s.substring(findNthPercSign(s, 1) + 1, findNthPercSign(s, 2));
+                        String receiver = s.substring(findNthPercSign(s, 2) + 1, findNthPercSign(s, 3));
+                        int ttl = Integer.parseInt(s.substring(findNthPercSign(s, 3) + 1, findNthPercSign(s, 4)));
+                        String message = s.substring(findNthPercSign(s, 4) + 1);
                         boolean foundReceiver = false;
                         if(ttl != 0) {
                             ttl--;
@@ -263,7 +278,8 @@ public class GreetingServer {
                     }
                 }
             }
-                           
+            
+            System.out.println("Closed client: " + loginName);
             clientSocket.close();
                            
             for(int j = 0; j < loginNames.size(); j++) {
@@ -276,9 +292,9 @@ public class GreetingServer {
         
         public void sendConnectedUsers() throws IOException {
             System.out.println("entered");
-            while(!reply);
+            while(!reply) {
+            }
             composeMessage2(out, "LST", allConnectedUsers);
-            System.out.println("done");
         }
     }
     
@@ -286,11 +302,11 @@ public class GreetingServer {
     public static void main(String [] args) throws Exception
     {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        System.out.println("Enter Port Number");
+        System.out.println("Enter the port number, where you want to listen for users");
         int port = Integer.parseInt(br.readLine());
         GreetingServer gs = new GreetingServer(port);
             
-        System.out.println("Enter the IP followed by the Port Number of the central server you want to connect to");
+        System.out.println("Enter (in 1 line) the IP followed by the port number of the central server you want to connect to");
         StringTokenizer st = new StringTokenizer(br.readLine());
         InetAddress IP = InetAddress.getByName(st.nextToken());
         port = Integer.parseInt(st.nextToken());
