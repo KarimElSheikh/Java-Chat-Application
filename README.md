@@ -1,6 +1,6 @@
 # Java Network Chat Application
 
-A Java chat application that allows communication between any 2 connected users through socket programming.
+A Java network chat application that allows communication between any 2 connected users through socket programming.
 
 The application's structure is as shown in the video: Users connect to intermediate servers which are in turn connected to one  central server. The users can all send direct messages to any user that's connected to any intermediate server. The users need not be aware of their connection to possibly different intermediate servers, as all the interactions between clients, servers, and central server are done seamlessly as needed.
 
